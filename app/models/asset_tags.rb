@@ -133,7 +133,7 @@ module AssetTags
     alt = " alt='#{asset.title}'" unless tag.attr['alt'] rescue nil
     attributes = options.inject('') { |s, (k, v)| s << %{#{k.downcase}="#{v}" } }.strip
     attributes << alt unless alt.nil?
-    url = asset.thumbnail(size)
+    url = asset_url(asset, size)
     %{<img src="#{url}" #{attributes unless attributes.empty?} />} rescue nil
   end
   
@@ -158,7 +158,7 @@ module AssetTags
   tag 'assets:flash' do |tag|
     asset, options = asset_and_options(tag)
     raise TagError, 'Must be flash' unless asset.swf?
-    url = asset.thumbnail('original')
+    url = asset_url(asset, 'original')
     dimensions = [(tag.attr['width'] || asset.width),(tag.attr['height'] || asset.height)]
     swf_embed_markup url, dimensions, tag.expand
   end
@@ -179,7 +179,7 @@ module AssetTags
   tag 'assets:url' do |tag|
     asset, options = asset_and_options(tag)
     size = options['size'] ? options.delete('size') : 'original'
-    asset.thumbnail(size) rescue nil
+    asset_url(asset, size) rescue nil
   end
   
   desc %{
@@ -197,7 +197,7 @@ module AssetTags
     attributes = options.inject('') { |s, (k, v)| s << %{#{k.downcase}="#{v}" } }.strip
     attributes = " #{attributes}" unless attributes.empty?
     text = tag.double? ? tag.expand : text
-    url = asset.thumbnail(size)
+    url = asset_url(asset, size)
     %{<a href="#{url  }#{anchor}"#{attributes}>#{text}</a>} rescue nil
   end
   
@@ -267,6 +267,10 @@ module AssetTags
       #{fallback_content}
         </object>
       <!-- <![endif]-->}
+    end
+    
+    def asset_url(asset, size)
+      response.template.send :compute_public_path, asset.thumbnail(size), ''
     end
 end
 
